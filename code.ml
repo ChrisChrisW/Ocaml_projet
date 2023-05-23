@@ -2,18 +2,18 @@
 (* ------------------------Initialisation ------------------------ *)
 
 type tformula =
-| Value of bool (* ⊥ ou � *)
-| Var of string (* Variable *)
-| Not of tformula (* Negation *)
-| And of tformula * tformula (* Conjonction *)
-| Or of tformula * tformula (* Disjonction *)
-| Implies of tformula * tformula (* Implication *)
-| Equivalent of tformula * tformula (* Equivalence *)
+  | Value of bool (* ⊥ ou � *)
+  | Var of string (* Variable *)
+  | Not of tformula (* Negation *)
+  | And of tformula * tformula (* Conjonction *)
+  | Or of tformula * tformula (* Disjonction *)
+  | Implies of tformula * tformula (* Implication *)
+  | Equivalent of tformula * tformula (* Equivalence *)
 ;;
 
 type decTree =
-| DecLeaf of bool
-| DecRoot of string * decTree * decTree;;
+  | DecLeaf of bool
+  | DecRoot of string * decTree * decTree;;
 
 let p1 = Var "P1";;
 let p2 = Var "P2";;
@@ -57,6 +57,7 @@ let rec string_of_var = function
   | Implies _ -> failwith "Invalid argument: Implies"
   | Equivalent _ -> failwith "Invalid argument: Equivalent";;
 
+(* getVars ex1 = ["P1";"P2";"Q1";"Q2"] *)
 assert (getVars ex1 = [string_of_var p1; string_of_var p2; string_of_var q1; string_of_var q2]);;
 
 (* --------------------------------------------------------------- *)
