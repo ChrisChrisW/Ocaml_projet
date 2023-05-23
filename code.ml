@@ -13,7 +13,8 @@ type tformula =
 
 type decTree =
   | DecLeaf of bool
-  | DecRoot of string * decTree * decTree;;
+  | DecRoot of string * decTree * decTree
+;;
 
 let p1 = Var "P1";;
 let p2 = Var "P2";;
@@ -49,7 +50,8 @@ let getVars formula =
         let vars' = aux vars f1 in
         aux vars' f2
   in
-  List.sort_uniq compare (aux [] formula);;
+  List.sort_uniq compare (aux [] formula)
+;;
 
 (* Fonction : string_of_var
    Description : Convertit une variable tformula en sa représentation sous forme de chaîne de caractères.
@@ -64,11 +66,43 @@ let rec string_of_var = function
   | And _ -> failwith "Invalid argument: And"
   | Or _ -> failwith "Invalid argument: Or"
   | Implies _ -> failwith "Invalid argument: Implies"
-  | Equivalent _ -> failwith "Invalid argument: Equivalent";;
+  | Equivalent _ -> failwith "Invalid argument: Equivalent"
+;;
 
 (* --- test --- *)
 (* getVars ex1 = ["P1";"P2";"Q1";"Q2"] *)
 assert (getVars ex1 = [string_of_var p1; string_of_var p2; string_of_var q1; string_of_var q2]);;
+
+(* --------------------------------------------------------------- *)
+(* --------------------------------------------------------------- *)
+
+
+(* --------------------------------------------------------------- *)
+(* ------------------------- Question 2 -------------------------- *)
+
+(* Type d'environnement *)
+type env = (string * bool) list
+
+(* Fonction : evalFormula
+   Description : Évalue une formule dans un environnement donné.
+   Paramètres :
+     - env : L'environnement contenant les valeurs des variables
+     - formula : La formule logique à évaluer
+   Retour : La valeur booléenne résultante de l'évaluation de la formule
+   Type : env -> tformula -> bool *)
+let rec evalFormula env formula =
+  match formula with
+  | Value b -> b
+  | Var v -> List.assoc v env
+  | Not f -> not (evalFormula env f)
+  | And (f1, f2) -> evalFormula env f1 && evalFormula env f2
+  | Or (f1, f2) -> evalFormula env f1 || evalFormula env f2
+  | Implies (f1, f2) -> not (evalFormula env f1) || evalFormula env f2
+  | Equivalent (f1, f2) -> evalFormula env f1 = evalFormula env f2;;
+
+let env = [("P1", false); ("P2", false); ("Q1", false); ("Q2", false)]
+(* evalFormula env ex1 = true *)
+let () = assert (evalFormula env ex1 = true)
 
 (* --------------------------------------------------------------- *)
 (* --------------------------------------------------------------- *)
