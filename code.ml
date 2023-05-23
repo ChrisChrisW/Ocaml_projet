@@ -106,3 +106,55 @@ let () = assert (evalFormula env ex1 = true)
 
 (* --------------------------------------------------------------- *)
 (* --------------------------------------------------------------- *)
+
+
+(* --------------------------------------------------------------- *)
+(* ------------------------- Question 3 -------------------------- *)
+
+(* Fonction : buildDecTree
+   Description : Construit l'arbre de décision d'une formule.
+   Paramètre :
+     - formula : La formule logique à partir de laquelle construire l'arbre de décision
+   Retour : L'arbre de décision correspondant à la formule
+   Type : tformula -> decTree *)
+let buildDecTree formula =
+  let vars = getVars formula in
+  let rec aux = function
+    | [] -> invalid_arg "Empty variable list"
+    | [v] -> DecRoot (v, DecLeaf true, DecLeaf false)
+    | v :: rest ->
+        let trueBranch = aux rest in
+        let falseBranch = aux rest in
+        DecRoot (v, trueBranch, falseBranch)
+  in
+  aux vars
+;;
+
+(* TODO : Marche pas *)
+(* let tree = buildDecTree ex1 in
+  let expected_tree =
+    DecRoot ("P1",
+      DecRoot ("P2",
+        DecRoot ("Q1", DecRoot ("Q2", DecLeaf true, DecLeaf false),
+          DecRoot ("Q2", DecLeaf false, DecLeaf true)),
+        DecRoot ("Q1", DecRoot ("Q2", DecLeaf false, DecLeaf false),
+          DecRoot ("Q2", DecLeaf false, DecLeaf false))),
+      DecRoot ("P2",
+        DecRoot ("Q1", DecRoot ("Q2", DecLeaf false, DecLeaf false),
+          DecRoot ("Q2", DecLeaf false, DecLeaf false)),
+        DecRoot ("Q1", DecRoot ("Q2", DecLeaf true, DecLeaf false),
+          DecRoot ("Q2", DecLeaf false, DecLeaf true))))
+    in
+    assert (tree = expected_tree)
+  ;; *)
+
+(* --------------------------------------------------------------- *)
+(* --------------------------------------------------------------- *)
+
+
+(* --------------------------------------------------------------- *)
+(* ------------------------- Question 4 -------------------------- *)
+
+
+(* --------------------------------------------------------------- *)
+(* --------------------------------------------------------------- *)
