@@ -2,7 +2,7 @@
 (* ------------------------Initialisation ------------------------ *)
 
 type tformula =
-  | Value of bool (* ⊥ ou � *)
+  | Value of bool (* ⊥ ou ⊤ *)
   | Var of string (* Variable *)
   | Not of tformula (* Negation *)
   | And of tformula * tformula (* Conjonction *)
@@ -30,7 +30,12 @@ let ex1 = And (f1, f2);;
 (* --------------------------------------------------------------- *)
 (* ------------------------- Question 1 -------------------------- *)
 
-(* val getVars : tformula -> string list *)
+(* Fonction : getVars
+   Description : Retourne la liste des variables présentes dans une formule.
+   Paramètre :
+     - formula : La formule logique à analyser
+   Retour : La liste des variables présentes dans la formule, triée par ordre croissant.
+   Type : tformula -> string list *)
 let getVars formula =
   let rec aux vars formula =
     match formula with
@@ -46,8 +51,12 @@ let getVars formula =
   in
   List.sort_uniq compare (aux [] formula);;
 
-(* --- test --- *)
-(* val string_of_var : tformula -> string *)
+(* Fonction : string_of_var
+   Description : Convertit une variable tformula en sa représentation sous forme de chaîne de caractères.
+   Paramètre :
+     - var : La variable tformula à convertir
+   Retour : La représentation de la variable en tant que chaîne de caractères.
+   Type : tformula -> string *)
 let rec string_of_var = function
   | Var v -> v
   | Value _ -> failwith "Invalid argument: Value"
@@ -57,6 +66,7 @@ let rec string_of_var = function
   | Implies _ -> failwith "Invalid argument: Implies"
   | Equivalent _ -> failwith "Invalid argument: Equivalent";;
 
+(* --- test --- *)
 (* getVars ex1 = ["P1";"P2";"Q1";"Q2"] *)
 assert (getVars ex1 = [string_of_var p1; string_of_var p2; string_of_var q1; string_of_var q2]);;
 
