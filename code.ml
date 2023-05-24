@@ -81,7 +81,7 @@ assert (getVars ex1 = [string_of_var p1; string_of_var p2; string_of_var q1; str
 (* ------------------------- Question 2 -------------------------- *)
 
 (* Type d'environnement *)
-type env = (string * bool) list
+type env = (string * bool) list;;
 
 (* Fonction : evalFormula
    Description : Évalue une formule dans un environnement donné.
@@ -98,11 +98,13 @@ let rec evalFormula env formula =
   | And (f1, f2) -> evalFormula env f1 && evalFormula env f2
   | Or (f1, f2) -> evalFormula env f1 || evalFormula env f2
   | Implies (f1, f2) -> not (evalFormula env f1) || evalFormula env f2
-  | Equivalent (f1, f2) -> evalFormula env f1 = evalFormula env f2;;
+  | Equivalent (f1, f2) -> evalFormula env f1 = evalFormula env f2
+;;
 
-let env = [("P1", false); ("P2", false); ("Q1", false); ("Q2", false)]
+let env = [("P1", false); ("P2", false); ("Q1", false); ("Q2", false)];;
+
 (* evalFormula env ex1 = true *)
-let () = assert (evalFormula env ex1 = true)
+let () = assert (evalFormula env ex1 = true);;
 
 (* --------------------------------------------------------------- *)
 (* --------------------------------------------------------------- *)
@@ -119,19 +121,17 @@ let () = assert (evalFormula env ex1 = true)
    Type : tformula -> decTree *)
 let buildDecTree formula =
   let vars = getVars formula in
-  let rec aux = function
-    | [] -> invalid_arg "Empty variable list"
-    | [v] -> DecRoot (v, DecLeaf true, DecLeaf false)
+  let rec aux env = function
+    | [] -> DecLeaf (evalFormula env formula)
     | v :: rest ->
-        let trueBranch = aux rest in
-        let falseBranch = aux rest in
+        let trueBranch = aux ((v, true) :: env) rest in
+        let falseBranch = aux ((v, false) :: env) rest in
         DecRoot (v, trueBranch, falseBranch)
   in
-  aux vars
+  aux [] vars
 ;;
 
-(* TODO : Marche pas *)
-(* let tree = buildDecTree ex1 in
+let tree = buildDecTree ex1 in
   let expected_tree =
     DecRoot ("P1",
       DecRoot ("P2",
@@ -146,8 +146,9 @@ let buildDecTree formula =
           DecRoot ("Q2", DecLeaf false, DecLeaf true))))
     in
     assert (tree = expected_tree)
-  ;; *)
+  ;; 
 
+  
 (* --------------------------------------------------------------- *)
 (* --------------------------------------------------------------- *)
 
