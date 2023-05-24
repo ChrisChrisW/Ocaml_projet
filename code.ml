@@ -156,6 +156,109 @@ let tree = buildDecTree ex1 in
 (* --------------------------------------------------------------- *)
 (* ------------------------- Question 4 -------------------------- *)
 
+(* Type of BDD node *)
+type bddNode =
+  | BddLeaf of int * bool
+  | BddNode of int * string * int * int
+;;
+
+(* Type of BDD *)
+type bdd = int * bddNode list;;
+
+(* Function: buildBdd
+   Description: Builds the BDD (Binary Decision Diagram) for a logical formula.
+   Parameter:
+     - formula: The logical formula to build the BDD from
+   Return: The BDD corresponding to the formula
+   Type: tformula -> bdd *)
+let buildBdd formula =
+  let node_table = Hashtbl.create 100 in
+  let node_count = ref 0 in
+
+  let rec aux = function
+    | Value b ->
+        let leaf_node = BddLeaf (!node_count, b) in
+        if not (Hashtbl.mem node_table leaf_node) then (
+          Hashtbl.add node_table leaf_node ();
+          node_count := !node_count + 1
+        );
+        !node_count - 1
+    | Var v ->
+        let var_node = BddNode (!node_count, v, -1, -1) in
+        if not (Hashtbl.mem node_table var_node) then (
+          Hashtbl.add node_table var_node ();
+          node_count := !node_count + 1
+        );
+        !node_count - 1
+    | Not f ->
+        let sub_node = aux f in
+        let neg_node = BddNode (!node_count, "not", sub_node, sub_node) in
+        if not (Hashtbl.mem node_table neg_node) then (
+          Hashtbl.add node_table neg_node ();
+          node_count := !node_count + 1
+        );
+        !node_count - 1
+    | And (f1, f2) ->
+        let sub_node1 = aux f1 in
+        let sub_node2 = aux f2 in
+        let and_node = BddNode (!node_count, "and", sub_node1, sub_node2) in
+        if not (Hashtbl.mem node_table and_node) then (
+          Hashtbl.add node_table and_node ();
+          node_count := !node_count + 1
+        );
+        !node_count - 1
+    | Or (f1, f2) ->
+        let sub_node1 = aux f1 in
+        let sub_node2 = aux f2 in
+        let or_node = BddNode (!node_count, "or", sub_node1, sub_node2) in
+        if not (Hashtbl.mem node_table or_node) then (
+          Hashtbl.add node_table or_node ();
+          node_count := !node_count + 1
+        );
+        !node_count - 1
+    | Implies (f1, f2) ->
+        let sub_node1 = aux f1 in
+        let sub_node2 = aux f2 in
+        let implies_node = BddNode (!node_count, "implies", sub_node1, sub_node2) in
+        if not (Hashtbl.mem node_table implies_node) then (
+          Hashtbl.add node_table implies_node ();
+          node_count := !node_count + 1
+        );
+        !node_count - 1
+    | Equivalent (f1, f2) ->
+        let sub_node1 = aux f1 in
+        let sub_node2 = aux f2 in
+        let equiv_node = BddNode (!node_count, "equiv", sub_node1, sub_node2) in
+        if not (Hashtbl.mem node_table equiv_node) then (
+          Hashtbl.add node_table equiv_node ();
+          node_count := !node_count + 1
+        );
+        !node_count - 1
+  in
+
+  let _ = aux formula in
+  (!node_count, Hashtbl.fold (fun node _ acc -> node :: acc) node_table [])
+;;
+
+(* --- test --- *)
+let bdd = buildBdd ex1 in
+let expected_bdd =
+  (10,
+   [ BddNode (10, "P1", 8, 9);
+     BddNode (9, "P2", 7, 5);
+     BddNode (8, "P2", 5, 7);
+     BddNode (7, "Q1", 6, 6);
+     BddNode (6, "Q2", 2, 2);
+     BddNode (5, "Q1", 3, 4);
+     BddNode (4, "Q2", 2, 1);
+     BddNode (3, "Q2", 1, 2);
+     BddLeaf (2, false);
+     BddLeaf (1, true) ])
+in
+if bdd = expected_bdd then
+  print_endline "BDD matches the expected BDD."
+else
+  print_endline "BDD does not match the expected BDD."
 
 (* --------------------------------------------------------------- *)
 (* --------------------------------------------------------------- *)
