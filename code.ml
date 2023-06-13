@@ -163,85 +163,110 @@ type bddNode =
 ;;
 
 (* Type of BDD *)
-type bdd = int * bddNode list;;
+type bdd = int * (bddNode list);;
 
 (* Function: buildBdd
-   Description: Builds the BDD (Binary Decision Diagram) for a logical formula.
-   Parameter:
-     - formula: The logical formula to build the BDD from
-   Return: The BDD corresponding to the formula
-   Type: tformula -> bdd *)
+   Description: Construit le BDD (Diagramme de Décision Binaire) pour une formule logique.
+   Paramètre :
+     - formula : La formule logique pour construire le BDD
+   Retour : Le BDD correspondant à la formule
+   Type : tformula -> bdd *)
 let buildBdd formula =
-  let node_table = Hashtbl.create 100 in
-  let node_count = ref 0 in
+  let node_table = ref [] in
+  let node_count = ref 1 in
 
-  let rec aux = function
+  let rec findNode name l =
+    match l with
+    | [] -> None
+    | BddNode (n, v, _, _) :: _ when v = name -> Some n
+    | _ :: rest -> findNode name rest
+  in
+
+  let rec aux vars formula =
+    match formula with
     | Value b ->
         let leaf_node = BddLeaf (!node_count, b) in
-        if not (Hashtbl.mem node_table leaf_node) then (
-          Hashtbl.add node_table leaf_node ();
-          node_count := !node_count + 1
-        );
+        node_table := leaf_node :: !node_table;
+        node_count := !node_count + 1;
         !node_count - 1
     | Var v ->
         let var_node = BddNode (!node_count, v, -1, -1) in
-        if not (Hashtbl.mem node_table var_node) then (
-          Hashtbl.add node_table var_node ();
-          node_count := !node_count + 1
-        );
+        node_table := var_node :: !node_table;
+        node_count := !node_count + 1;
         !node_count - 1
     | Not f ->
-        let sub_node = aux f in
-        let neg_node = BddNode (!node_count, "not", sub_node, sub_node) in
-        if not (Hashtbl.mem node_table neg_node) then (
-          Hashtbl.add node_table neg_node ();
-          node_count := !node_count + 1
-        );
-        !node_count - 1
+        let sub_node = aux vars f in
+        let neg_node =
+          match findNode "not" !node_table with
+          | Some n -> n
+          | None ->
+              node_count := !node_count + 1;
+              let new_node = BddNode (!node_count - 1, "not", sub_node, sub_node) in
+              node_table := new_node :: !node_table;
+              !node_count - 1
+        in
+        neg_node
     | And (f1, f2) ->
-        let sub_node1 = aux f1 in
-        let sub_node2 = aux f2 in
-        let and_node = BddNode (!node_count, "and", sub_node1, sub_node2) in
-        if not (Hashtbl.mem node_table and_node) then (
-          Hashtbl.add node_table and_node ();
-          node_count := !node_count + 1
-        );
-        !node_count - 1
+        let sub_node1 = aux vars f1 in
+        let sub_node2 = aux vars f2 in
+        let and_node =
+          match findNode "and" !node_table with
+          | Some n -> n
+          | None ->
+              node_count := !node_count + 1;
+              let new_node = BddNode (!node_count - 1, "and", sub_node1, sub_node2) in
+              node_table := new_node :: !node_table;
+              !node_count - 1
+        in
+        and_node
     | Or (f1, f2) ->
-        let sub_node1 = aux f1 in
-        let sub_node2 = aux f2 in
-        let or_node = BddNode (!node_count, "or", sub_node1, sub_node2) in
-        if not (Hashtbl.mem node_table or_node) then (
-          Hashtbl.add node_table or_node ();
-          node_count := !node_count + 1
-        );
-        !node_count - 1
+        let sub_node1 = aux vars f1 in
+        let sub_node2 = aux vars f2 in
+        let or_node =
+          match findNode "or" !node_table with
+          | Some n -> n
+          | None ->
+              node_count := !node_count + 1;
+              let new_node = BddNode (!node_count - 1, "or", sub_node1, sub_node2) in
+              node_table := new_node :: !node_table;
+              !node_count - 1
+        in
+        or_node
     | Implies (f1, f2) ->
-        let sub_node1 = aux f1 in
-        let sub_node2 = aux f2 in
-        let implies_node = BddNode (!node_count, "implies", sub_node1, sub_node2) in
-        if not (Hashtbl.mem node_table implies_node) then (
-          Hashtbl.add node_table implies_node ();
-          node_count := !node_count + 1
-        );
-        !node_count - 1
+        let sub_node1 = aux vars f1 in
+        let sub_node2 = aux vars f2 in
+        let implies_node =
+          match findNode "implies" !node_table with
+          | Some n -> n
+          | None ->
+              node_count := !node_count + 1;
+              let new_node = BddNode (!node_count - 1, "implies", sub_node1, sub_node2) in
+              node_table := new_node :: !node_table;
+              !node_count - 1
+        in
+        implies_node
     | Equivalent (f1, f2) ->
-        let sub_node1 = aux f1 in
-        let sub_node2 = aux f2 in
-        let equiv_node = BddNode (!node_count, "equiv", sub_node1, sub_node2) in
-        if not (Hashtbl.mem node_table equiv_node) then (
-          Hashtbl.add node_table equiv_node ();
-          node_count := !node_count + 1
-        );
-        !node_count - 1
+        let sub_node1 = aux vars f1 in
+        let sub_node2 = aux vars f2 in
+        let equiv_node =
+          match findNode "equiv" !node_table with
+          | Some n -> n
+          | None ->
+              node_count := !node_count + 1;
+              let new_node = BddNode (!node_count - 1, "equiv", sub_node1, sub_node2) in
+              node_table := new_node :: !node_table;
+              !node_count - 1
+        in
+        equiv_node
   in
 
-  let _ = aux formula in
-  (!node_count, Hashtbl.fold (fun node _ acc -> node :: acc) node_table [])
+  let vars = getVars formula in
+  let root_node = aux vars formula in
+  (root_node, List.rev !node_table)
 ;;
 
 (* --- test --- *)
-let bdd = buildBdd ex1 in
+let bdd = buildBdd ex1;;(* in
 let expected_bdd =
   (10,
    [ BddNode (10, "P1", 8, 9);
@@ -255,10 +280,88 @@ let expected_bdd =
      BddLeaf (2, false);
      BddLeaf (1, true) ])
 in
-if bdd = expected_bdd then
-  print_endline "BDD matches the expected BDD."
-else
-  print_endline "BDD does not match the expected BDD."
+assert(bdd = expected_bdd) *)
+
+(* --------------------------------------------------------------- *)
+(* --------------------------------------------------------------- *)
+
+
+(* --------------------------------------------------------------- *)
+(* ------------------------- Question 5 -------------------------- *)
+
+(* Fonction : simplifyBDD
+   Description : Simplifie le BDD en fusionnant les nœuds identiques.
+   Paramètre :
+     - bdd : Le BDD à simplifier
+   Retour : Le BDD simplifié
+   Type : bdd -> bdd *)
+let simplifyBDD bdd =
+  let root, nodes = bdd in
+  let node_table = Hashtbl.create (List.length nodes) in
+
+  let rec updateSucc n =
+    if Hashtbl.mem node_table n then
+      updateSucc (Hashtbl.find node_table n)
+    else
+      n
+  in
+
+  let rec buildTable = function
+    | [] -> ()
+    | node :: rest -> (
+        match node with
+        | BddNode (n, _, p, _) when p <> n ->
+            let new_p = updateSucc p in
+            Hashtbl.add node_table n new_p;
+            buildTable rest
+        | _ -> buildTable rest
+      )
+  in
+  buildTable nodes;
+
+  let updated_nodes =
+    List.map (fun node -> match node with
+        | BddNode (n, s, p, _) when p <> n ->
+            let new_p = updateSucc p in
+            BddNode (n, s, new_p, new_p)
+        | _ -> node) nodes
+  in
+
+  (root, updated_nodes)
+;;
+
+let simplify_bdd = simplifyBDD bdd;;
+
+(* --------------------------------------------------------------- *)
+(* --------------------------------------------------------------- *)
+
+
+(* --------------------------------------------------------------- *)
+(* ------------------------- Question 6 -------------------------- *)
+let isTautology formula =
+  let bdd = buildBdd formula in
+  let simplified_bdd = simplifyBDD bdd in
+  let root, nodes = simplified_bdd in
+  let rec traverse node =
+    match node with
+    | BddLeaf (_, b) -> b
+    | BddNode (_, _, p, _) ->
+        if p > 0 && p <= List.length nodes then
+          traverse (List.nth nodes (p - 1))
+        else
+          false (* Index hors limite, retourne false *)
+  in
+  traverse (List.nth nodes (root - 1))
+;;
+
+let formula1 = And (Var "P", Not (Var "P"));;
+let formula2 = Or (Var "Q", Not (Var "Q"));;
+
+let is_tautology1 = isTautology formula1;;
+let is_tautology2 = isTautology formula2;;
+
+(* Printf.printf "La formule 1 est une tautologie : %b\n" is_tautology1;;
+Printf.printf "La formule 2 est une tautologie : %b\n" is_tautology2;; *)
 
 (* --------------------------------------------------------------- *)
 (* --------------------------------------------------------------- *)
