@@ -100,10 +100,10 @@ let evalFormula : (string * bool) list -> tformula -> bool = fun env formula ->
   eval formula
 ;;
 
-let env = [("P1", false); ("P2", false); ("Q1", false); ("Q2", false)];;
-
+(* --- test --- *)
 (* evalFormula env ex1 = true *)
-let () = assert (evalFormula env ex1 = true);;
+let () = let env = [("P1", false); ("P2", false); ("Q1", false); ("Q2", false)] 
+  in assert (evalFormula env ex1 = true);;
 
 (* --------------------------------------------------------------- *)
 (* --------------------------------------------------------------- *)
@@ -130,6 +130,7 @@ let buildDecTree : tformula -> decTree = fun formula ->
   aux [] vars
 ;;
 
+(* --- test --- *)
 let tree = buildDecTree ex1 in
   let expected_tree =
     DecRoot ("P1",
@@ -161,7 +162,6 @@ let tree = buildDecTree ex1 in
 
 (* ---------------------------------------------------------------------------------------------- *)
 (* ------------------------------- Ne fonctionne pas correctement ------------------------------- *)
-
 
 
 
@@ -346,6 +346,7 @@ let simplifyBDD : bdd -> bdd = fun bdd ->
   (root, updated_nodes)
 ;;
 
+(* --- test --- *)
 let simplify_bdd = simplifyBDD bdd;;
 
 (* --------------------------------------------------------------- *)
@@ -377,10 +378,11 @@ let isTautology : tformula -> bool = fun formula ->
   traverse (List.nth nodes (root - 1))
 ;;
 
-let formula_non_tautology = And (Var "p", Not (Var "p"));;
-
-let is_tautology = isTautology formula_non_tautology;;
-let () = assert (is_tautology = false);;
+(* --- test --- *)
+let () = let formula_non_tautology = And (Var "p", Not (Var "p")) in
+  let is_tautology = isTautology formula_non_tautology in
+    assert (is_tautology = false)
+;;
 
 (* --------------------------------------------------------------- *)
 (* --------------------------------------------------------------- *)
@@ -404,10 +406,11 @@ let areEquivalent : tformula -> tformula -> bool = fun formula1 formula2 ->
   simplifiedBDD1 = simplifiedBDD2
 ;;
 
-(* Tests *)
+(* --- test --- *)
 let () =
   assert (areEquivalent p1 p1 = true);
-  assert (areEquivalent p1 p2 = false)
+  assert (areEquivalent p1 p2 = false);
+;;
 
 (* --------------------------------------------------------------- *)
 (* --------------------------------------------------------------- *)
@@ -455,6 +458,7 @@ let dotBDD (filename : string) (bdd : bdd) : unit =
   close_out file
 ;;
 
+(* --- test --- *)
 let expected_bdd : bdd = 
   (10,
   [ BddNode (10, "P1", 8, 9);
@@ -511,6 +515,7 @@ let rec dotDec (filename : string) (tree : decTree) : unit =
   close_out file
 ;;
 
+(* --- test --- *)
 let expected_tree =
   DecRoot ("P1",
     DecRoot ("P2",
