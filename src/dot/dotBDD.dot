@@ -1,0 +1,14 @@
+digraph G {
+  1 [shape=ellipse, label="1", fontname="Arial", fontweight="bold"];
+  1 [style=bold, label="true"];
+  1 [shape=ellipse, label="1", fontname="Arial", fontweight="bold"];
+  2 [shape=ellipse, label="2", fontname="Arial", fontweight="bold"];
+  3 [shape=ellipse, label="3", fontname="Arial", fontweight="bold"];
+  4 [shape=ellipse, label="4", fontname="Arial", fontweight="bold"];
+  5 [shape=ellipse, label="5", fontname="Arial", fontweight="bold"];
+  6 [shape=ellipse, label="6", fontname="Arial", fontweight="bold"];
+  7 [shape=ellipse, label="7", fontname="Arial", fontweight="bold"];
+  8 [shape=ellipse, label="8", fontname="Arial", fontweight="bold"];
+  9 [shape=ellipse, label="9", fontname="Arial", fontweight="bold"];
+  10 [shape=ellipse, label="10", fontname="Arial", fontweight="bold"];
+}

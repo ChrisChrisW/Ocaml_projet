@@ -1,6 +1,8 @@
 (* --------------------------------------------------------------- *)
 (* ------------------------Initialisation ------------------------ *)
 
+open Printf (* Pour la partie bonus *)
+
 type tformula =
   | Value of bool (* ⊥ ou ⊤ *)
   | Var of string (* Variable *)
@@ -406,6 +408,124 @@ let areEquivalent : tformula -> tformula -> bool = fun formula1 formula2 ->
 let () =
   assert (areEquivalent p1 p1 = true);
   assert (areEquivalent p1 p2 = false)
+
+(* --------------------------------------------------------------- *)
+(* --------------------------------------------------------------- *)
+
+
+(* --------------------------------------------------------------- *)
+(* ------------------------- Question 8 -------------------------- *)
+
+
+
+let dotBDD (filename : string) (bdd : bdd) : unit =
+  let root, nodes = bdd in
+  let file = open_out filename in
+  let visited = Array.make (List.length nodes) false in
+
+  let rec printNode (node : bddNode) : unit =
+    match node with
+    | BddLeaf (n, b) ->
+        fprintf file "  %d [shape=ellipse, label=\"%d\", fontname=\"Arial\", fontweight=\"bold\"];\n" n n;
+        fprintf file "  %d [style=bold, label=\"%s\"];\n" n (if b then "true" else "false")
+    | BddNode (n, s, p, _) ->
+        visited.(n - 1) <- true;
+        visited.(p - 1) <- true;
+        let edge_style = if p = n then "solid" else "dashed" in
+        let edge_color = if p = n then "red" else "black" in
+        fprintf file "  %d [label=\"%s\"];\n" n s;
+        fprintf file "  %d -> %d [style=\"%s\", color=\"%s\"];\n" n p edge_style edge_color;
+        let next_node = List.nth nodes (p - 1) in
+        printNode next_node
+  in
+
+  fprintf file "digraph G {\n";
+  printNode (List.nth nodes (root - 1));
+
+  (* Add any remaining unvisited nodes *)
+  List.iteri (fun i visited ->
+      if not visited then (
+        let n = i + 1 in
+        fprintf file "  %d [shape=ellipse, label=\"%d\", fontname=\"Arial\", fontweight=\"bold\"];\n" n n
+      )
+    ) (Array.to_list visited);
+
+  fprintf file "}\n";
+
+  close_out file
+;;
+
+let expected_bdd : bdd = 
+  (10,
+  [ BddNode (10, "P1", 8, 9);
+    BddNode (9, "P2", 7, 5);
+    BddNode (8, "P2", 5, 7);
+    BddNode (7, "Q1", 6, 6);
+    BddNode (6, "Q2", 2, 2);
+    BddNode (5, "Q1", 3, 4);
+    BddNode (4, "Q2", 2, 1);
+    BddNode (3, "Q2", 1, 2);
+    BddLeaf (2, false);
+    BddLeaf (1, true) ]) in
+  dotBDD "src/dot/dotBDD.dot" expected_bdd
+;;
+
+(* --------------------------------------------------------------- *)
+(* --------------------------------------------------------------- *)
+
+
+(* --------------------------------------------------------------- *)
+(* ------------------------- Question 9 -------------------------- *)
+
+(* Fonction : dotDec
+   Description : Génère un fichier au format DOT représentant un arbre de décision.
+   Paramètres :
+     - filename : Le nom du fichier DOT à générer
+     - tree : L'arbre de décision à représenter
+   Retour : Unit
+   Effet de bord : Crée un fichier au format DOT représentant l'arbre de décision
+   Type : string -> decTree -> unit *)
+let rec dotDec (filename : string) (tree : decTree) : unit =
+  let file = open_out filename in
+  let write_line line = output_string file (line ^ "\n") in
+  let counter = ref 0 in
+
+  let rec traverse_node parent_label = function
+    | DecLeaf b ->
+        let node_label = "Leaf" ^ string_of_int !counter in
+        counter := !counter + 1;
+        write_line (node_label ^ " [label=\"" ^ string_of_bool b ^ "\", shape=box];");
+        write_line (parent_label ^ " -> " ^ node_label ^ ";")
+    | DecRoot (label, left, right) ->
+        let node_label = "Node" ^ string_of_int !counter in
+        counter := !counter + 1;
+        write_line (node_label ^ " [label=\"" ^ label ^ "\"];");
+        write_line (parent_label ^ " -> " ^ node_label ^ ";");
+        traverse_node node_label left;
+        traverse_node node_label right
+  in
+
+  write_line "digraph DecisionTree {";
+  traverse_node "Root" tree;
+  write_line "}";
+  close_out file
+;;
+
+let expected_tree =
+  DecRoot ("P1",
+    DecRoot ("P2",
+      DecRoot ("Q1", DecRoot ("Q2", DecLeaf true, DecLeaf false),
+        DecRoot ("Q2", DecLeaf false, DecLeaf true)),
+      DecRoot ("Q1", DecRoot ("Q2", DecLeaf false, DecLeaf false),
+        DecRoot ("Q2", DecLeaf false, DecLeaf false))),
+    DecRoot ("P2",
+      DecRoot ("Q1", DecRoot ("Q2", DecLeaf false, DecLeaf false),
+        DecRoot ("Q2", DecLeaf false, DecLeaf false)),
+      DecRoot ("Q1", DecRoot ("Q2", DecLeaf true, DecLeaf false),
+        DecRoot ("Q2", DecLeaf false, DecLeaf true))))
+        
+  in dotDec "src/dot/dotDec.dot" expected_tree
+;;
 
 (* --------------------------------------------------------------- *)
 (* --------------------------------------------------------------- *)

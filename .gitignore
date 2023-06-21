@@ -1,1 +1,6 @@
 .vscode
+
+src/dot/*
+src/pdf/*
+src/example_dot/*.pdf
+
