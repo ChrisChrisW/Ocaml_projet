@@ -307,7 +307,7 @@ assert(bdd = expected_bdd) *)
      - bdd : Le BDD à simplifier
    Retour : Le BDD simplifié
    Type : bdd -> bdd *)
-let simplifyBDD bdd =
+let simplifyBDD : bdd -> bdd = fun bdd ->
   let root, nodes = bdd in
   let node_table = Hashtbl.create (List.length nodes) in
 
