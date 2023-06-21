@@ -1,4 +1,4 @@
-digraph DecisionTree {
+digraph dotDec {
 Node0 [label="P1"];
 Root -> Node0;
 Node1 [label="P2"];

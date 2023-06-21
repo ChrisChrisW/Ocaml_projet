@@ -409,6 +409,13 @@ let () =
 (* ------------------------- Question 8 -------------------------- *)
 (* ------------- ( Ne fonctionne pas correctement ) -------------- *)
 
+(* Fonction : dotBDD
+   Description : Génère une représentation Graphviz (DOT) d'un BDD.
+   Paramètres :
+     - filename : Le nom du fichier DOT à créer
+     - bdd : Le BDD à représenter
+   Effet de bord : Crée un fichier DOT contenant la représentation du BDD
+   Type : string -> bdd -> unit *)
 let dotBDD (filename : string) (bdd : bdd) : unit =
   let root, nodes = bdd in
   let file = open_out filename in
@@ -430,7 +437,7 @@ let dotBDD (filename : string) (bdd : bdd) : unit =
         printNode next_node
   in
 
-  fprintf file "digraph G {\n";
+  fprintf file "digraph dotBDD {\n";
   printNode (List.nth nodes (root - 1));
 
   (* Add any remaining unvisited nodes *)
@@ -497,7 +504,7 @@ let rec dotDec (filename : string) (tree : decTree) : unit =
         traverse_node node_label right
   in
 
-  write_line "digraph DecisionTree {";
+  write_line "digraph dotDec {";
   traverse_node "Root" tree;
   write_line "}";
   close_out file
