@@ -49,8 +49,8 @@ let getVars : tformula -> string list = fun formula ->
         let vars' = aux vars f1 in
         aux vars' f2
   in
-  List.sort_uniq compare (aux [] formula)
-;;
+  List.sort_uniq String.compare (aux [] formula)
+
 
 (* Fonction : string_of_var
    Description : Convertit une variable tformula en sa représentation sous forme de chaîne de caractères.
