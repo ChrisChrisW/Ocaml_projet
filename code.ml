@@ -65,8 +65,8 @@ let string_of_var : tformula -> string = fun var ->
 ;;
 
 (* --- test --- *)
-(* getVars ex1 = ["P1";"P2";"Q1";"Q2"] *)
 assert (getVars ex1 = [string_of_var p1; string_of_var p2; string_of_var q1; string_of_var q2]);;
+assert (getVars ex1 = ["P1"; "P2"; "Q1"; "Q2"]);;
 
 (* --------------------------------------------------------------- *)
 (* --------------------------------------------------------------- *)
@@ -351,10 +351,10 @@ let simplify_bdd = simplifyBDD bdd;;
 (* --------------------------------------------------------------- *)
 (* ------------------------- Question 6 -------------------------- *)
 let isTautology : tformula -> bool = fun formula ->
-  let bdd = buildBdd formula in
-  let simplified_bdd = simplifyBDD bdd in
+  let bdd : bdd = buildBdd formula in
+  let simplified_bdd : bdd = simplifyBDD bdd in
   let root, nodes = simplified_bdd in
-  let rec traverse node =
+  let rec traverse (node : bddNode) : bool =
     match node with
     | BddLeaf (_, b) -> b
     | BddNode (_, _, p, _) ->
@@ -374,6 +374,32 @@ let is_tautology2 = isTautology formula2;;
 
 (* Printf.printf "La formule 1 est une tautologie : %b\n" is_tautology1;;
 Printf.printf "La formule 2 est une tautologie : %b\n" is_tautology2;; *)
+
+(* --------------------------------------------------------------- *)
+(* --------------------------------------------------------------- *)
+
+
+(* --------------------------------------------------------------- *)
+(* ------------------------- Question 7 -------------------------- *)
+
+(* Fonction : areEquivalent
+   Description : Vérifie si deux formules sont équivalentes en construisant les BDDs simplifiés.
+   Paramètres :
+     - formula1 : La première formule
+     - formula2 : La deuxième formule
+   Retour : true si les formules sont équivalentes, false sinon.
+   Type : tformula -> tformula -> bool *)
+let areEquivalent : tformula -> tformula -> bool = fun formula1 formula2 ->
+  let bdd1 = buildBdd formula1 in
+  let bdd2 = buildBdd formula2 in
+  let simplifiedBDD1 = simplifyBDD bdd1 in
+  let simplifiedBDD2 = simplifyBDD bdd2 in
+  simplifiedBDD1 = simplifiedBDD2
+
+(* Tests *)
+let () =
+  assert (areEquivalent p1 p1 = true);
+  assert (areEquivalent p1 p2 = false)
 
 (* --------------------------------------------------------------- *)
 (* --------------------------------------------------------------- *)
