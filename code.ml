@@ -311,7 +311,7 @@ let simplifyBDD : bdd -> bdd = fun bdd ->
   let root, nodes = bdd in
   let node_table = ref [] in
 
-  let rec updateSucc n =
+  let rec updateSucc (n : int) : int =
     match List.assoc_opt n !node_table with
     | Some next -> updateSucc next
     | None -> n
@@ -350,7 +350,7 @@ let simplify_bdd = simplifyBDD bdd;;
 
 (* --------------------------------------------------------------- *)
 (* ------------------------- Question 6 -------------------------- *)
-let isTautology formula =
+let isTautology : tformula -> bool = fun formula ->
   let bdd = buildBdd formula in
   let simplified_bdd = simplifyBDD bdd in
   let root, nodes = simplified_bdd in
