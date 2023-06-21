@@ -309,13 +309,12 @@ assert(bdd = expected_bdd) *)
    Type : bdd -> bdd *)
 let simplifyBDD : bdd -> bdd = fun bdd ->
   let root, nodes = bdd in
-  let node_table = Hashtbl.create (List.length nodes) in
+  let node_table = ref [] in
 
   let rec updateSucc n =
-    if Hashtbl.mem node_table n then
-      updateSucc (Hashtbl.find node_table n)
-    else
-      n
+    match List.assoc_opt n !node_table with
+    | Some next -> updateSucc next
+    | None -> n
   in
 
   let rec buildTable = function
@@ -324,7 +323,7 @@ let simplifyBDD : bdd -> bdd = fun bdd ->
         match node with
         | BddNode (n, _, p, _) when p <> n ->
             let new_p = updateSucc p in
-            Hashtbl.add node_table n new_p;
+            node_table := (n, new_p) :: !node_table;
             buildTable rest
         | _ -> buildTable rest
       )
@@ -332,7 +331,8 @@ let simplifyBDD : bdd -> bdd = fun bdd ->
   buildTable nodes;
 
   let updated_nodes =
-    List.map (fun node -> match node with
+    List.map (fun node ->
+        match node with
         | BddNode (n, s, p, _) when p <> n ->
             let new_p = updateSucc p in
             BddNode (n, s, new_p, new_p)
