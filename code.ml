@@ -16,13 +16,13 @@ type decTree =
   | DecRoot of string * decTree * decTree
 ;;
 
-let p1 : tformula = Var "P1"
-let p2 : tformula = Var "P2"
-let q1 : tformula = Var "Q1"
-let q2 : tformula = Var "Q2"
-let f1 : tformula = Equivalent (q1, q2)
-let f2 : tformula = Equivalent (p1, p2)
-let ex1 : tformula = And (f1, f2)
+let p1 : tformula = Var "P1";;
+let p2 : tformula = Var "P2";;
+let q1 : tformula = Var "Q1";;
+let q2 : tformula = Var "Q2";;
+let f1 : tformula = Equivalent (q1, q2);;
+let f2 : tformula = Equivalent (p1, p2);;
+let ex1 : tformula = And (f1, f2);;
 
 (* --------------------------------------------------------------- *)
 (* --------------------------------------------------------------- *)
@@ -50,7 +50,7 @@ let getVars : tformula -> string list = fun formula ->
         aux vars' f2
   in
   List.sort_uniq String.compare (aux [] formula)
-
+;;
 
 (* Fonction : string_of_var
    Description : Convertit une variable tformula en sa représentation sous forme de chaîne de caractères.
@@ -98,7 +98,6 @@ let evalFormula : (string * bool) list -> tformula -> bool = fun env formula ->
   eval formula
 ;;
 
-
 let env = [("P1", false); ("P2", false); ("Q1", false); ("Q2", false)];;
 
 (* evalFormula env ex1 = true *)
@@ -145,7 +144,6 @@ let tree = buildDecTree ex1 in
     in
     assert (tree = expected_tree)
   ;; 
-
   
 (* --------------------------------------------------------------- *)
 (* --------------------------------------------------------------- *)
@@ -175,13 +173,15 @@ type bddNode =
 ;;
 
 (* Type of BDD *)
-type bdd = int * (bddNode list);;
+type bdd = int * (bddNode list);; (* un entier pour designer le noeud racine et la liste des noeuds *)
 
-(* Function: buildBdd
-   Description: Construit le BDD (Diagramme de Décision Binaire) pour une formule logique.
+(* Fonction : buildBdd
+   Description : Construit un BDD (Diagramme de Décision Binaire) à partir d'une formule logique.
    Paramètre :
-     - formula : La formule logique pour construire le BDD
-   Retour : Le BDD correspondant à la formule
+     - formula : La formule logique à partir de laquelle construire le BDD
+   Retour : Un couple (root_node, node_table) représentant le BDD, où :
+            - root_node : L'identifiant du nœud racine du BDD
+            - node_table : La liste des nœuds du BDD (triée dans l'ordre inverse de leur création)
    Type : tformula -> bdd *)
 let buildBdd : tformula -> bdd = fun formula ->
   let node_table : bddNode list ref = ref [] in
@@ -302,10 +302,12 @@ assert(bdd = expected_bdd) *)
 (* ------------------------- Question 5 -------------------------- *)
 
 (* Fonction : simplifyBDD
-   Description : Simplifie le BDD en fusionnant les nœuds identiques.
+   Description : Simplifie un BDD en éliminant les nœuds redondants.
    Paramètre :
      - bdd : Le BDD à simplifier
-   Retour : Le BDD simplifié
+   Retour : Le BDD simplifié, représenté par un couple (root_node, updated_nodes), où :
+            - root_node : L'identifiant du nœud racine du BDD simplifié
+            - updated_nodes : La liste des nœuds du BDD simplifié (dans le même ordre que dans le BDD d'origine)
    Type : bdd -> bdd *)
 let simplifyBDD : bdd -> bdd = fun bdd ->
   let root, nodes = bdd in
@@ -350,6 +352,13 @@ let simplify_bdd = simplifyBDD bdd;;
 
 (* --------------------------------------------------------------- *)
 (* ------------------------- Question 6 -------------------------- *)
+
+(* Fonction : isTautology
+   Description : Vérifie si une formule logique est une tautologie en utilisant un BDD simplifié.
+   Paramètre :
+     - formula : La formule logique à vérifier
+   Retour : true si la formule est une tautologie, false sinon.
+   Type : tformula -> bool *)
 let isTautology : tformula -> bool = fun formula ->
   let bdd : bdd = buildBdd formula in
   let simplified_bdd : bdd = simplifyBDD bdd in
@@ -366,14 +375,10 @@ let isTautology : tformula -> bool = fun formula ->
   traverse (List.nth nodes (root - 1))
 ;;
 
-let formula1 = And (Var "P", Not (Var "P"));;
-let formula2 = Or (Var "Q", Not (Var "Q"));;
+let formula_non_tautology = And (Var "p", Not (Var "p"));;
 
-let is_tautology1 = isTautology formula1;;
-let is_tautology2 = isTautology formula2;;
-
-(* Printf.printf "La formule 1 est une tautologie : %b\n" is_tautology1;;
-Printf.printf "La formule 2 est une tautologie : %b\n" is_tautology2;; *)
+let is_tautology = isTautology formula_non_tautology;;
+let () = assert (is_tautology = false);;
 
 (* --------------------------------------------------------------- *)
 (* --------------------------------------------------------------- *)
@@ -383,10 +388,10 @@ Printf.printf "La formule 2 est une tautologie : %b\n" is_tautology2;; *)
 (* ------------------------- Question 7 -------------------------- *)
 
 (* Fonction : areEquivalent
-   Description : Vérifie si deux formules sont équivalentes en construisant les BDDs simplifiés.
+   Description : Vérifie si deux formules logiques sont équivalentes en comparant leurs BDD simplifiés.
    Paramètres :
-     - formula1 : La première formule
-     - formula2 : La deuxième formule
+     - formula1 : La première formule logique
+     - formula2 : La deuxième formule logique
    Retour : true si les formules sont équivalentes, false sinon.
    Type : tformula -> tformula -> bool *)
 let areEquivalent : tformula -> tformula -> bool = fun formula1 formula2 ->
@@ -395,6 +400,7 @@ let areEquivalent : tformula -> tformula -> bool = fun formula1 formula2 ->
   let simplifiedBDD1 = simplifyBDD bdd1 in
   let simplifiedBDD2 = simplifyBDD bdd2 in
   simplifiedBDD1 = simplifiedBDD2
+;;
 
 (* Tests *)
 let () =
