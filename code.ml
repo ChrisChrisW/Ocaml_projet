@@ -295,33 +295,32 @@ assert(bdd = expected_bdd) *)
      - bdd : Le BDD à simplifier
    Retour : Le BDD simplifié
    Type : bdd -> bdd *)
-let simplifyBDD : bdd -> bdd = fun bdd ->
+let simplifyBDD bdd =
   let root, nodes = bdd in
   let node_table = Hashtbl.create (List.length nodes) in
 
-  let rec updateSucc : int -> int = fun n ->
+  let rec updateSucc n =
     if Hashtbl.mem node_table n then
       updateSucc (Hashtbl.find node_table n)
     else
       n
   in
 
-  let rec buildTable : node list -> unit = fun nodes ->
-    match nodes with
+  let rec buildTable = function
     | [] -> ()
-    | node :: rest ->
-        (match node with
+    | node :: rest -> (
+        match node with
         | BddNode (n, _, p, _) when p <> n ->
             let new_p = updateSucc p in
             Hashtbl.add node_table n new_p;
             buildTable rest
-        | _ -> buildTable rest)
+        | _ -> buildTable rest
+      )
   in
   buildTable nodes;
 
   let updated_nodes =
-    List.map (fun node ->
-        match node with
+    List.map (fun node -> match node with
         | BddNode (n, s, p, _) when p <> n ->
             let new_p = updateSucc p in
             BddNode (n, s, new_p, new_p)
@@ -330,7 +329,6 @@ let simplifyBDD : bdd -> bdd = fun bdd ->
 
   (root, updated_nodes)
 ;;
-
 
 let simplify_bdd = simplifyBDD bdd;;
 
