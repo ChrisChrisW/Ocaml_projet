@@ -1,4 +1,4 @@
-digraph G {
+digraph buildBdd {
     10 [ label = "P1" ];
     10 -> 8 [ color = red, style = dashed ];
     10 -> 9;
