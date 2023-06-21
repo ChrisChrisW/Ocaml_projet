@@ -16,13 +16,13 @@ type decTree =
   | DecRoot of string * decTree * decTree
 ;;
 
-let p1 = Var "P1";;
-let p2 = Var "P2";;
-let q1 = Var "Q1";;
-let q2 = Var "Q2";;
-let f1 = Equivalent (q1, q2);;
-let f2 = Equivalent (p1, p2);;
-let ex1 = And (f1, f2);;
+let p1 : tformula = Var "P1"
+let p2 : tformula = Var "P2"
+let q1 : tformula = Var "Q1"
+let q2 : tformula = Var "Q2"
+let f1 : tformula = Equivalent (q1, q2)
+let f2 : tformula = Equivalent (p1, p2)
+let ex1 : tformula = And (f1, f2)
 
 (* --------------------------------------------------------------- *)
 (* --------------------------------------------------------------- *)
@@ -37,9 +37,8 @@ let ex1 = And (f1, f2);;
      - formula : La formule logique à analyser
    Retour : La liste des variables présentes dans la formule, triée par ordre croissant.
    Type : tformula -> string list *)
-let getVars formula =
-  let rec aux vars formula =
-    match formula with
+let getVars : tformula -> string list = fun formula ->
+  let rec aux : string list -> tformula -> string list = fun vars -> function
     | Value _ -> vars
     | Var v -> v :: vars
     | Not f -> aux vars f
@@ -59,14 +58,10 @@ let getVars formula =
      - var : La variable tformula à convertir
    Retour : La représentation de la variable en tant que chaîne de caractères.
    Type : tformula -> string *)
-let rec string_of_var = function
+let string_of_var : tformula -> string = fun var ->
+  match var with
   | Var v -> v
-  | Value _ -> failwith "Invalid argument: Value"
-  | Not _ -> failwith "Invalid argument: Not"
-  | And _ -> failwith "Invalid argument: And"
-  | Or _ -> failwith "Invalid argument: Or"
-  | Implies _ -> failwith "Invalid argument: Implies"
-  | Equivalent _ -> failwith "Invalid argument: Equivalent"
+  | _ -> failwith "Invalid argument: string_of_var"
 ;;
 
 (* --- test --- *)
@@ -90,16 +85,19 @@ type env = (string * bool) list;;
      - formula : La formule logique à évaluer
    Retour : La valeur booléenne résultante de l'évaluation de la formule
    Type : env -> tformula -> bool *)
-let rec evalFormula env formula =
-  match formula with
-  | Value b -> b
-  | Var v -> List.assoc v env
-  | Not f -> not (evalFormula env f)
-  | And (f1, f2) -> evalFormula env f1 && evalFormula env f2
-  | Or (f1, f2) -> evalFormula env f1 || evalFormula env f2
-  | Implies (f1, f2) -> not (evalFormula env f1) || evalFormula env f2
-  | Equivalent (f1, f2) -> evalFormula env f1 = evalFormula env f2
+let evalFormula : (string * bool) list -> tformula -> bool = fun env formula ->
+  let rec eval : tformula -> bool = function
+    | Value b -> b
+    | Var v -> List.assoc v env
+    | Not f -> not (eval f)
+    | And (f1, f2) -> eval f1 && eval f2
+    | Or (f1, f2) -> eval f1 || eval f2
+    | Implies (f1, f2) -> not (eval f1) || eval f2
+    | Equivalent (f1, f2) -> eval f1 = eval f2
+  in
+  eval formula
 ;;
+
 
 let env = [("P1", false); ("P2", false); ("Q1", false); ("Q2", false)];;
 
@@ -119,13 +117,13 @@ let () = assert (evalFormula env ex1 = true);;
      - formula : La formule logique à partir de laquelle construire l'arbre de décision
    Retour : L'arbre de décision correspondant à la formule
    Type : tformula -> decTree *)
-let buildDecTree formula =
-  let vars = getVars formula in
-  let rec aux env = function
+let buildDecTree : tformula -> decTree = fun formula ->
+  let vars : string list = getVars formula in
+  let rec aux (env : (string * bool) list) : string list -> decTree = function
     | [] -> DecLeaf (evalFormula env formula)
     | v :: rest ->
-        let trueBranch = aux ((v, true) :: env) rest in
-        let falseBranch = aux ((v, false) :: env) rest in
+        let trueBranch : decTree = aux ((v, true) :: env) rest in
+        let falseBranch : decTree = aux ((v, false) :: env) rest in
         DecRoot (v, trueBranch, falseBranch)
   in
   aux [] vars
@@ -171,98 +169,100 @@ type bdd = int * (bddNode list);;
      - formula : La formule logique pour construire le BDD
    Retour : Le BDD correspondant à la formule
    Type : tformula -> bdd *)
-let buildBdd formula =
-  let node_table = ref [] in
-  let node_count = ref 1 in
+let buildBdd : tformula -> bdd = fun formula ->
+  let node_table : bddNode list ref = ref [] in
+  let node_count : int ref = ref 1 in
 
-  let rec findNode name l =
+  let rec findNode (name : string) (l : bddNode list) : int option =
     match l with
     | [] -> None
     | BddNode (n, v, _, _) :: _ when v = name -> Some n
     | _ :: rest -> findNode name rest
   in
 
-  let rec aux vars formula =
+  let rec aux (vars : string list) (formula : tformula) : int =
     match formula with
     | Value b ->
-        let leaf_node = BddLeaf (!node_count, b) in
+        let leaf_node : bddNode = BddLeaf (!node_count, b) in
         node_table := leaf_node :: !node_table;
         node_count := !node_count + 1;
         !node_count - 1
     | Var v ->
-        let var_node = BddNode (!node_count, v, -1, -1) in
+        let var_node : bddNode = BddNode (!node_count, v, -1, -1) in
         node_table := var_node :: !node_table;
         node_count := !node_count + 1;
         !node_count - 1
     | Not f ->
-        let sub_node = aux vars f in
-        let neg_node =
+        let sub_node : int = aux vars f in
+        let neg_node : int =
           match findNode "not" !node_table with
           | Some n -> n
           | None ->
               node_count := !node_count + 1;
-              let new_node = BddNode (!node_count - 1, "not", sub_node, sub_node) in
+              let new_node : bddNode = BddNode (!node_count - 1, "not", sub_node, sub_node) in
               node_table := new_node :: !node_table;
               !node_count - 1
         in
         neg_node
     | And (f1, f2) ->
-        let sub_node1 = aux vars f1 in
-        let sub_node2 = aux vars f2 in
-        let and_node =
+        let sub_node1 : int = aux vars f1 in
+        let sub_node2 : int = aux vars f2 in
+        let and_node : int =
           match findNode "and" !node_table with
           | Some n -> n
           | None ->
               node_count := !node_count + 1;
-              let new_node = BddNode (!node_count - 1, "and", sub_node1, sub_node2) in
+              let new_node : bddNode = BddNode (!node_count - 1, "and", sub_node1, sub_node2) in
               node_table := new_node :: !node_table;
               !node_count - 1
         in
         and_node
     | Or (f1, f2) ->
-        let sub_node1 = aux vars f1 in
-        let sub_node2 = aux vars f2 in
-        let or_node =
+        let sub_node1 : int = aux vars f1 in
+        let sub_node2 : int = aux vars f2 in
+        let or_node : int =
           match findNode "or" !node_table with
           | Some n -> n
           | None ->
               node_count := !node_count + 1;
-              let new_node = BddNode (!node_count - 1, "or", sub_node1, sub_node2) in
+              let new_node : bddNode = BddNode (!node_count - 1, "or", sub_node1, sub_node2) in
               node_table := new_node :: !node_table;
               !node_count - 1
         in
         or_node
     | Implies (f1, f2) ->
-        let sub_node1 = aux vars f1 in
-        let sub_node2 = aux vars f2 in
-        let implies_node =
+        let sub_node1 : int = aux vars f1 in
+        let sub_node2 : int = aux vars f2 in
+        let implies_node : int =
           match findNode "implies" !node_table with
           | Some n -> n
           | None ->
               node_count := !node_count + 1;
-              let new_node = BddNode (!node_count - 1, "implies", sub_node1, sub_node2) in
+              let new_node : bddNode = BddNode (!node_count - 1, "implies", sub_node1, sub_node2) in
               node_table := new_node :: !node_table;
               !node_count - 1
         in
         implies_node
     | Equivalent (f1, f2) ->
-        let sub_node1 = aux vars f1 in
-        let sub_node2 = aux vars f2 in
-        let equiv_node =
+        let sub_node1 : int = aux vars f1 in
+        let sub_node2 : int = aux vars f2 in
+        let equiv_node : int =
           match findNode "equiv" !node_table with
           | Some n -> n
           | None ->
               node_count := !node_count + 1;
-              let new_node = BddNode (!node_count - 1, "equiv", sub_node1, sub_node2) in
+              let new_node : bddNode = BddNode (!node_count - 1, "equiv", sub_node1, sub_node2) in
               node_table := new_node :: !node_table;
               !node_count - 1
         in
         equiv_node
   in
 
-  let vars = getVars formula in
-  let root_node = aux vars formula in
+  let vars : string list = getVars formula in
+  let root_node : int = aux vars formula in
   (root_node, List.rev !node_table)
+
+
 ;;
 
 (* --- test --- *)
@@ -295,32 +295,33 @@ assert(bdd = expected_bdd) *)
      - bdd : Le BDD à simplifier
    Retour : Le BDD simplifié
    Type : bdd -> bdd *)
-let simplifyBDD bdd =
+let simplifyBDD : bdd -> bdd = fun bdd ->
   let root, nodes = bdd in
   let node_table = Hashtbl.create (List.length nodes) in
 
-  let rec updateSucc n =
+  let rec updateSucc : int -> int = fun n ->
     if Hashtbl.mem node_table n then
       updateSucc (Hashtbl.find node_table n)
     else
       n
   in
 
-  let rec buildTable = function
+  let rec buildTable : node list -> unit = fun nodes ->
+    match nodes with
     | [] -> ()
-    | node :: rest -> (
-        match node with
+    | node :: rest ->
+        (match node with
         | BddNode (n, _, p, _) when p <> n ->
             let new_p = updateSucc p in
             Hashtbl.add node_table n new_p;
             buildTable rest
-        | _ -> buildTable rest
-      )
+        | _ -> buildTable rest)
   in
   buildTable nodes;
 
   let updated_nodes =
-    List.map (fun node -> match node with
+    List.map (fun node ->
+        match node with
         | BddNode (n, s, p, _) when p <> n ->
             let new_p = updateSucc p in
             BddNode (n, s, new_p, new_p)
@@ -329,6 +330,7 @@ let simplifyBDD bdd =
 
   (root, updated_nodes)
 ;;
+
 
 let simplify_bdd = simplifyBDD bdd;;
 
